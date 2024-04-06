@@ -65,9 +65,9 @@ def prompt_for_content():
 
 def prompt_for_article():
     print("\nPlease enter the new article details.")
-    section = input("Section (news/athletics): ").strip().lower()
-    while section not in ["news", "athletics"]:
-        print("Invalid section. Please choose 'news' or 'athletics'.")
+    section = input("Section (new/athletics): ").strip().lower()
+    while section not in ["new", "athletics"]:
+        print("Invalid section. Please choose 'new' or 'athletics'.")
         section = input("Section: ").strip().lower()
 
     title_text = input("Title Text: ")
