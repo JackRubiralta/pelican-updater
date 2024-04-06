@@ -6,96 +6,64 @@ import random
 import string
 
 # Constants
-GITHUB_TOKEN = 'your_github_token_here'
-REPO_NAME = 'JackRubiralta/pelican-api'  # Repository name
-FILE_PATH = 'data.json'  # Path to your JSON file within the GitHub repository
-BRANCH = 'master'  # The branch where your file is located
+def get_github_token():
+    """Attempts to retrieve the GitHub token from a file."""
+    token_file_path = "github_token.txt"
+    try:
+        with open(token_file_path, "r") as file:
+            token = file.read().strip()
+            if token:
+                return token
+            else:
+                raise FileNotFoundError
+    except FileNotFoundError:
+        return None
+    
+REPO_NAME = 'JackRubiralta/pelican-api'
+FILE_PATH = 'data.json'
+BRANCH = 'master'
+
 def generate_random_string(length=15):
     """Generate a random string of fixed length."""
-    letters = string.ascii_letters  # Combination of lowercase and uppercase
+    letters = string.ascii_letters
     return ''.join(random.choice(letters) for i in range(length))
 
-# Prompt for article details including section choice
-import os
-
-def upload_image_to_github(image_path, branch='master'):
-    # Generate a unique filename using a random string + original file extension
-    _, ext = os.path.splitext(image_path)  # Extract the extension from the input file path
-    random_filename = generate_random_string(15) + ext  # Append extension to the random string
-    
-    # Encode the image in base64
-    with open(image_path, "rb") as image_file:
-        image_content = base64.b64encode(image_file.read()).decode('utf-8')
-
-    # Define the GitHub API URL for the target path
-    url = f"https://api.github.com/repos/{REPO_NAME}/contents/images/{random_filename}"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "message": f"Add image {random_filename}",
-        "content": image_content,
-        "branch": branch
-    }
-
-    # Make the request to upload the image
-    response = requests.put(url, headers=headers, json=data)
-    if response.status_code in [200, 201]:
-        print(f"Image {random_filename} uploaded successfully.")
-        # Return the GitHub URL for the uploaded image
-        return f"/images/{random_filename}"
-    else:
-        print(f"Failed to upload image {random_filename}. Response: {response.text}")
-        return None
-
-
 def prompt_for_content():
-    content_list = []  # Initialize an empty list to hold content items
-
+    print("\nAdding new content items. Type 'none' to finish adding.")
+    content_list = []
+    images_info = []  # Store images information here for later upload
     while True:
-        content_type = input("Type of content to add (paragraph/image/none to finish): ").strip().lower()
-
-        if content_type == 'none':
-            break  # Exit the loop if the user is done adding content
-        elif content_type == 'paragraph':
+        content_type = input("\nType of content to add (paragraph (p) / image (i) / none (n)): ").strip().lower()
+        if content_type == 'none' or content_type == 'n':
+            break
+        elif content_type == 'paragraph' or content_type == 'p':
             text = input("Enter paragraph text: ")
-            content_list.append({
-                "type": "paragraph",
-                "text": text
-            })
-        elif content_type == 'image':
-            image_file_path = input("Enter image file location (relative path): ").strip()
-            if image_file_path:
-                uploaded_image_source = upload_image_to_github(image_file_path, BRANCH)
-                if uploaded_image_source:
-                    image_caption = input("Enter image caption (leave blank if none): ").strip()
-                    content_list.append({
-                        "type": "image",
-                        "source": uploaded_image_source,
-                        "caption": image_caption
-                    })
-                else:
-                    print("Failed to upload image. Skipping this content item.")
+            content_list.append({"type": "paragraph", "text": text})
+        elif content_type == 'image' or content_type == 'i':
+            image_file_path = input("Enter image file location: ").strip()
+            if os.path.isfile(image_file_path):
+                image_caption = input("Enter image caption (optional): ").strip()
+                random_filename = generate_random_string(15) + os.path.splitext(image_file_path)[-1]
+                images_info.append((image_file_path, random_filename))
+                content_list.append({"type": "image", "source": f"/images/{random_filename}", "caption": image_caption})
             else:
-                print("No image file location provided. Skipping this content item.")
+                print("Image file does not exist. Please check the path and try again.")
         else:
-            print("Invalid content type. Please enter 'paragraph', 'image', or 'none'.")
-
-    return content_list
+            print("Invalid input. Please type 'paragraph (p)', 'image (i)', or 'none (n)'.")
+    return content_list, images_info
 
 def prompt_for_article():
-    print("Please enter the new article details:")
-    section = input("Section (new/athletics): ").strip().lower()
-    while section not in ["new", "athletics"]:
-        print("Invalid section. Please choose 'new' or 'athletics'.")
-        section = input("Section (new/athletics): ").strip().lower()
+    print("\nPlease enter the new article details.")
+    section = input("Section (news/athletics): ").strip().lower()
+    while section not in ["news", "athletics"]:
+        print("Invalid section. Please choose 'news' or 'athletics'.")
+        section = input("Section: ").strip().lower()
 
     title_text = input("Title Text: ")
     title_size = input("Title Size (big/small/medium): ").strip().lower()
     while title_size not in ["big", "small", "medium"]:
         print("Invalid size. Please choose 'big', 'small', or 'medium'.")
-        title_size = input("Title Size (big/small/medium): ").strip().lower()
+        title_size = input("Title Size: ").strip().lower()
 
     summary_content = input("Summary Content: ")
     show_summary = input("Show Summary? (yes/no): ").strip().lower() == 'yes'
@@ -103,87 +71,88 @@ def prompt_for_article():
     date = input("Date (YYYY-MM-DD): ")
     length = int(input("Length (in minutes): "))
 
-    # Ask for the local image file location
-    image_file_path = input("Main Image File Location (leave blank for no image): ").strip()
-    image_source = ""  # Initialize image source as empty
-    if image_file_path:
-        uploaded_image_source = upload_image_to_github(image_file_path, BRANCH)
-        if uploaded_image_source:
-            image_source = uploaded_image_source
-            
-            # Use a while loop to ensure a valid response for "Show Image?"
-            image_show_input = input("Show Image? (yes/no): ").strip().lower()
-            while image_show_input not in ["yes", "no"]:
-                print("Invalid input. Please type 'yes' or 'no'.")
-                image_show_input = input("Show Image? (yes/no): ").strip().lower()
-            image_show = image_show_input == 'yes'
-            
-            image_caption = input("Image Caption (leave blank if none): ").strip()
-
-            # Use a while loop to ensure a valid response for "Image Position"
-            valid_positions = ["bottom", "side", "top"]
-            image_position = input("Image Position (bottom/side/generic, leave blank for 'bottom'): ").strip().lower()
-            while image_position not in valid_positions and image_position != "":
-                print(f"Invalid position. Please choose one of the following: {', '.join(valid_positions)}.")
-                image_position = input("Image Position (bottom/side/generic, leave blank for 'bottom'): ").strip().lower()
-            image_position = image_position if image_position in valid_positions else "bottom"
+    main_image_file_path = input("Main Image File Location (optional): ").strip()
+    main_image_info = None
+    if main_image_file_path and os.path.isfile(main_image_file_path):
+        random_filename = generate_random_string(15) + os.path.splitext(main_image_file_path)[-1]
+        main_image_info = (main_image_file_path, random_filename)
     else:
-        image_show = False
-        image_caption = ""
-        image_position = ""
+        print("Main image file does not exist. Continuing without a main image.")
 
-    content = prompt_for_content()
-    new_article = {
+    content, images_info = prompt_for_content()
+    if main_image_info:
+        images_info.append(main_image_info)  # Add the main image for uploading
+
+    article_info = {
         "section": section,
         "article": {
-            "id": input("ID: "),
-            "title": {
-                "text": title_text,
-                "size": title_size
-            },
-            "summary": {
-                "content": summary_content,
-                "show": show_summary
-            },
-            "image": {
-                "source": image_source,  # Use the URL or path where the image is accessible
-                "position": image_position,
-                "caption": image_caption,
-                "show": image_show
-            },
-            "date": date,
+            "id": generate_random_string(10),
+            "title": {"text": title_text, "size": title_size},
+            "summary": {"content": summary_content, "show": show_summary},
             "author": author,
+            "date": date,
             "length": length,
             "content": content,
         }
     }
 
-    return new_article
+    if main_image_info:
+        article_info["article"]["image"] = {
+            "source": f"/images/{main_image_info[1]}",
+            "caption": input("Main Image Caption (optional): ").strip(),
+            "show": input("Show Main Image? (yes/no): ").strip().lower() == 'yes',
+            "position": input("Main Image Position (bottom/side/generic, default 'bottom'): ").strip().lower() or "bottom"
+        }
 
+    return article_info, images_info
 
-# Fetch and decode the current data.json content from GitHub
-def fetch_current_data(repo_name, file_path):
-    url = f"https://api.github.com/repos/{repo_name}/contents/{file_path}"
+def upload_image_to_github(image_path, random_filename):
+    with open(image_path, "rb") as image_file:
+        image_content = base64.b64encode(image_file.read()).decode('utf-8')
+    url = f"https://api.github.com/repos/{REPO_NAME}/contents/images/{random_filename}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Content-Type": "application/json"}
+    data = {"message": f"Add image {random_filename}", "content": image_content, "branch": BRANCH}
+    response = requests.put(url, headers=headers, json=data)
+    if response.status_code in [200, 201]:
+        print(f"Image {random_filename} uploaded successfully.")
+        return f"https://raw.githubusercontent.com/{REPO_NAME}/{BRANCH}/images/{random_filename}"
+    else:
+        print(f"Failed to upload image {random_filename}. Response: {response.text}")
+        return None
+
+def upload_images(images_info):
+    path_to_url = {}
+    for image_path, random_filename in images_info:
+        uploaded_url = upload_image_to_github(image_path, random_filename)
+        if uploaded_url:
+            path_to_url[f"/images/{random_filename}"] = uploaded_url
+    return path_to_url
+
+def update_article_with_image_urls(article_info, path_to_url):
+    for content_item in article_info["article"]["content"]:
+        if content_item["type"] == "image" and content_item["source"] in path_to_url:
+            content_item["source"] = path_to_url[content_item["source"]]
+    if "image" in article_info["article"] and article_info["article"]["image"]["source"] in path_to_url:
+        article_info["article"]["image"]["source"] = path_to_url[article_info["article"]["image"]["source"]]
+    return article_info
+
+def fetch_current_data():
+    url = f"https://api.github.com/repos/{REPO_NAME}/contents/{FILE_PATH}?ref={BRANCH}"
     headers = {'Authorization': f'token {GITHUB_TOKEN}'}
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         file_info = response.json()
-        encoded_content = file_info['content']
-        sha = file_info['sha']
-        decoded_content = base64.b64decode(encoded_content).decode('utf-8')
-        return decoded_content, sha
+        decoded_content = base64.b64decode(file_info['content']).decode('utf-8')
+        return decoded_content, file_info['sha']
     else:
-        raise Exception("Failed to fetch current data.json")
+        print("Failed to fetch current data.json. Response:", response.text)
+        return None, None
 
-# Update the file on GitHub
-def update_file_on_github(repo_name, file_path, new_content, sha, message="Update data.json with a new article"):
-    url = f"https://api.github.com/repos/{repo_name}/contents/{file_path}"
-    headers = {
-        'Authorization': f'token {GITHUB_TOKEN}',
-        'Accept': 'application/vnd.github.v3+json'
-    }
+def update_file_on_github(new_content, sha):
+    url = f"https://api.github.com/repos/{REPO_NAME}/contents/{FILE_PATH}"
+    headers = {'Authorization': f'token {GITHUB_TOKEN}', 'Accept': 'application/vnd.github.v3+json'}
     data = {
-        'message': message,
+        'message': "Update data.json with a new article",
         'content': base64.b64encode(new_content.encode('utf-8')).decode('utf-8'),
         'branch': BRANCH,
         'sha': sha
@@ -192,20 +161,31 @@ def update_file_on_github(repo_name, file_path, new_content, sha, message="Updat
     if response.status_code == 200:
         print("Article added successfully.")
     else:
-        print("Failed to update article:", response.json())
+        print("Failed to update article. Response:", response.json())
 
 def main():
-    article_info = prompt_for_article()
-    section = article_info['section']
-    new_article = article_info['article']
-    current_data, sha = fetch_current_data(REPO_NAME, FILE_PATH)
-    data_json = json.loads(current_data)
-    data_json[section].append(new_article)  # Append the article to the chosen section
-    updated_content = json.dumps(data_json, indent=4)
-    update_file_on_github(REPO_NAME, FILE_PATH, updated_content, sha)
+    
+    GITHUB_TOKEN = get_github_token()
+    
+    if GITHUB_TOKEN is None:
+        print("No GitHub token found. Please run 'python setup.py' to generate a token.")
+        return
+
+    # Your main script logic here
+    print("GitHub Token found:", GITHUB_TOKEN)
+    
+    print("Creating article!")
+    article_info, images_info = prompt_for_article()
+    path_to_url = upload_images(images_info)
+    article_info = update_article_with_image_urls(article_info, path_to_url)
+
+    current_data, sha = fetch_current_data()
+    if current_data is not None:
+        data_json = json.loads(current_data)
+        section = article_info['section']
+        data_json[section].append(article_info['article'])
+        updated_content = json.dumps(data_json, indent=4)
+        update_file_on_github(updated_content, sha)
 
 if __name__ == "__main__":
     main()
-
-
-# git push heroku master
