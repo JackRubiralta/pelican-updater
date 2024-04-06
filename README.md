@@ -27,6 +27,11 @@ Follow these steps to install Python on your system:
 
 1. Python comes pre-installed on macOS. You can verify the installation by opening Terminal and typing `python3 --version`.
 2. If you need a newer version, you can download it from the [official Python website](https://www.python.org/downloads/macos/) or use a package manager like Homebrew.
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install python
+```
+
 
 #### Linux:
 

@@ -17,7 +17,18 @@ def get_github_token():
             else:
                 raise FileNotFoundError
     except FileNotFoundError:
+    
         return None
+    
+if __name__ == "__main__":
+    GITHUB_TOKEN = get_github_token()
+        
+    if GITHUB_TOKEN is None:
+        print("No GitHub token found. Please run 'python setup.py' to generate a token.")
+        
+
+# Your main script logic here
+print("GitHub Token found:", GITHUB_TOKEN)
     
 REPO_NAME = 'JackRubiralta/pelican-api'
 FILE_PATH = 'data.json'
@@ -165,14 +176,7 @@ def update_file_on_github(new_content, sha):
 
 def main():
     
-    GITHUB_TOKEN = get_github_token()
     
-    if GITHUB_TOKEN is None:
-        print("No GitHub token found. Please run 'python setup.py' to generate a token.")
-        return
-
-    # Your main script logic here
-    print("GitHub Token found:", GITHUB_TOKEN)
     
     print("Creating article!")
     article_info, images_info = prompt_for_article()
