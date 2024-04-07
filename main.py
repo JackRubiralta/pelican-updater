@@ -111,6 +111,13 @@ def prompt_for_article():
             "show": input("Show Main Image? (yes/no): ").strip().lower() == 'yes',
             "position": input("Main Image Position (bottom/side/generic, default 'bottom'): ").strip().lower() or "bottom"
         }
+    else:
+        article_info["article"]["image"] = {
+            "source": "",
+            "caption": "",
+            "show": False,
+            "position": "bottom"
+        }        
 
     return article_info, images_info
 
