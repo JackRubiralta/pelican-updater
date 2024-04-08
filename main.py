@@ -145,12 +145,8 @@ def upload_images(images_info):
     return path_to_url
 
 def update_article_with_image_urls(article_info, path_to_url):
-    for content_item in article_info["article"]["content"]:
-        if content_item["type"] == "image" and content_item["source"] in path_to_url:
-            content_item["source"] = path_to_url[content_item["source"]]
-    if "image" in article_info["article"] and article_info["article"]["image"]["source"] in path_to_url:
-        article_info["article"]["image"]["source"] = path_to_url[article_info["article"]["image"]["source"]]
     return article_info
+
 def fetch_current_data():
     url = f"https://api.github.com/repos/{REPO_NAME}/contents/{FILE_PATH}?ref={BRANCH}"
     headers = {'Authorization': f'token {GITHUB_TOKEN}'}
