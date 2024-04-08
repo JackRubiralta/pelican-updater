@@ -1,0 +1,40 @@
+ main_image_file_path = input("Main Image File Location (optional, type 'skip' to skip): ").strip()
+    main_image_info = None
+
+    # Loop until a valid path is provided or the user decides to skip
+    while main_image_file_path.lower() != 'skip':
+        if os.path.isfile(main_image_file_path):
+            # Generate a random filename for the main image
+            random_filename = generate_random_string(15) + os.path.splitext(main_image_file_path)[-1]
+            main_image_info = (main_image_file_path, random_filename)
+            break  # Exit the loop as we have a valid file
+        else:
+            print("Main image file does not exist. Please check the path and try again or type 'skip' to continue without a main image.")
+            main_image_file_path = input("Main Image File Location (optional, type 'skip' to skip): ").strip()
+    
+    main_image = {
+            "source": "",
+            "caption": "",
+            "show": False,
+            "position": ""
+        }      
+
+    if main_image_info:
+        images_info.append(main_image_info)  # Add the main image for uploading
+        main_image = {
+            "source": f"/images/{main_image_info[1]}",
+            "caption": input("Main Image Caption (optional): ").strip(),
+            "show": input("Show Main Image? (yes/no): ").strip().lower() == 'yes',
+            "position": input("Main Image Position (bottom/side/top, default 'bottom'): ").strip().lower() or "bottom"
+        }
+        
+
+make the option part for the main_image better  and user freindly, if there is not main image have 
+main_image = {
+            "source": "",
+            "caption": "",
+            "show": False,
+            "position": ""
+        }     
+
+ 

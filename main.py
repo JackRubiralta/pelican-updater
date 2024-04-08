@@ -149,9 +149,49 @@ def prompt_for_article():
             print("Main image file does not exist. Please check the path and try again or type 'skip' to continue without a main image.")
             main_image_file_path = input("Main Image File Location (optional, type 'skip' to skip): ").strip()
 
-    content, images_info = prompt_for_content()
+    # Initialize main_image with default values
+    main_image = {
+        "source": "",
+        "caption": "",
+        "show": False,
+        "position": ""
+    }
+
     if main_image_info:
         images_info.append(main_image_info)  # Add the main image for uploading
+        main_image["source"] = f"/images/{main_image_info[1]}"
+        main_image["caption"] = input("Main Image Caption (optional): ").strip()
+
+        # Validate input for showing the main image
+        show_input = ''
+        while show_input not in ['yes', 'y', 'no', 'n']:
+            show_input = input("Show Main Image? (yes/no or y/n): ").strip().lower()
+            if show_input in ['yes', 'y']:
+                main_image["show"] = True
+            elif show_input in ['no', 'n']:
+                main_image["show"] = False
+
+        # Validate input for the position of the main image
+        position_input = ''
+        while position_input not in ['bottom', 'b', 'side', 's', 'top', 't']:
+            position_input = input("Main Image Position (bottom/side/top or b/s/t): ").strip().lower()
+            if position_input in ['bottom', 'b']:
+                main_image["position"] = 'bottom'
+            elif position_input in ['side', 's']:
+                main_image["position"] = 'side'
+            elif position_input in ['top', 't']:
+                main_image["position"] = 'top'
+            else:
+                print("Invalid position. Please choose 'bottom', 'side', or 'top' (or 'b', 's', 't').")
+
+    # If main_image_info is None, main_image will remain with its default values.
+
+            
+        
+    content, images_info = prompt_for_content()
+    
+          
+
 
     article_info = {
         "section": section,
@@ -163,23 +203,9 @@ def prompt_for_article():
             "date": date,
             "length": length,
             "content": content,
+            "image": main_image,
         }
     }
-
-    if main_image_info:
-        article_info["article"]["image"] = {
-            "source": f"/images/{main_image_info[1]}",
-            "caption": input("Main Image Caption (optional): ").strip(),
-            "show": input("Show Main Image? (yes/no): ").strip().lower() == 'yes',
-            "position": input("Main Image Position (bottom/side/generic, default 'bottom'): ").strip().lower() or "bottom"
-        }
-    else:
-        article_info["article"]["image"] = {
-            "source": "",
-            "caption": "",
-            "show": False,
-            "position": "bottom"
-        }        
 
     return article_info, images_info
 
