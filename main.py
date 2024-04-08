@@ -4,6 +4,7 @@ import base64
 import os
 import random
 import string
+import re
 
 # Constants
 def get_github_token():
@@ -65,34 +66,88 @@ def prompt_for_content():
 
 def prompt_for_article():
     print("\nPlease enter the new article details.")
-    section = input("Section (news/athletics): ").strip().lower()
-    while section not in ["news", "athletics"]:
-        print("Invalid section. Please choose 'news' or 'athletics'.")
+    section = input("Section (news/athletics or n/a): ").strip().lower()
+    # Keep asking until a valid input is provided
+    while section not in ["news", "n", "athletics", "a"]:
+        print("Invalid section. Please choose 'news' or 'athletics' (or 'n' / 'a').")
         section = input("Section: ").strip().lower()
-    if section == 'news':
-            section = 'new'   
+
+    # Map the abbreviations to their full form
+    if section == 'n':
+        section = 'new'
+    elif section == 'a':
+        section = 'athletics' 
+    elif section == 'news':
+        section = 'new'
 
     title_text = input("Title Text: ")
-    title_size = input("Title Size (big/small/medium): ").strip().lower()
-    while title_size not in ["big", "small", "medium"]:
-        print("Invalid size. Please choose 'big', 'small', or 'medium'.")
+    title_size = input("Title Size (big (b) / medium (m) / small (s)): ").strip().lower()
+    # Keep asking until a valid input is provided
+    while title_size not in ["big", "b", "small", "s", "medium", "m"]:
+        print("Invalid size. Please choose 'big', 'small', or 'medium' (or 'b', 's', 'm').")
         title_size = input("Title Size: ").strip().lower()
 
-    show_summary = input("Show Summary? (yes/no): ").strip().lower() == 'yes'
-    summary_content = input("Summary Content: ") if show_summary else ""
-    
-    author = input("Author: ")
-    date = input("Date (YYYY-MM-DD): ")
-    length = int(input("Length (in minutes): "))
+    # Map the abbreviations to their full form
+    if title_size == 'b':
+        title_size = 'big'
+    elif title_size == 'm':
+        title_size = 'medium'
+    elif title_size == 's':
+        title_size = 'small'
 
-    main_image_file_path = input("Main Image File Location (optional): ").strip()
+
+    show_summary = None
+    # Ask the user until a valid input is provided
+    while show_summary is None:
+        user_input = input("Show Summary? (yes/no or y/n): ").strip().lower()
+        if user_input in ['yes', 'y']:
+            show_summary = True
+        elif user_input in ['no', 'n']:
+            show_summary = False
+        else:
+            print("Invalid input. Please answer 'yes' or 'no' ('y' or 'n').")
+
+# Ask for summary content if the user wants to show the summary
+    if show_summary:
+        summary_content = input("Summary Content: ")
+    else:
+        summary_content = ""
+    
+   
+    author = input("Author: ")
+    while not author.strip():
+        print("Author name cannot be empty.")
+        author = input("Author: ")
+
+    # Validate date input with regex
+    date = input("Date (YYYY-MM-DD): ")
+    date_regex = r"^\d{4}-\d{2}-\d{2}$"
+    while not re.match(date_regex, date):
+        print("Invalid date format. Please use YYYY-MM-DD.")
+        date = input("Date (YYYY-MM-DD): ")
+
+    # Validate length as a positive integer
+    length_input = input("Length (in minutes): ")
+    while not length_input.isdigit() or int(length_input) <= 0:
+        print("Invalid length. Please enter a positive integer.")
+        length_input = input("Length (in minutes): ")
+    length = int(length_input)
+
+
+    
+    main_image_file_path = input("Main Image File Location (optional, type 'skip' to skip): ").strip()
     main_image_info = None
-    if main_image_file_path:
+
+    # Loop until a valid path is provided or the user decides to skip
+    while main_image_file_path.lower() != 'skip':
         if os.path.isfile(main_image_file_path):
+            # Generate a random filename for the main image
             random_filename = generate_random_string(15) + os.path.splitext(main_image_file_path)[-1]
             main_image_info = (main_image_file_path, random_filename)
+            break  # Exit the loop as we have a valid file
         else:
-            print("Main image file does not exist. Continuing without a main image.")
+            print("Main image file does not exist. Please check the path and try again or type 'skip' to continue without a main image.")
+            main_image_file_path = input("Main Image File Location (optional, type 'skip' to skip): ").strip()
 
     content, images_info = prompt_for_content()
     if main_image_info:
