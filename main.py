@@ -66,7 +66,7 @@ def prompt_for_content():
 
 def prompt_for_article():
     print("\nPlease enter the new article details.")
-    section = input("Section (news/athletics or n/a): ").strip().lower()
+    section = input("Section (news (n) / athletics (a)): ").strip().lower()
     # Keep asking until a valid input is provided
     while section not in ["news", "n", "athletics", "a"]:
         print("Invalid section. Please choose 'news' or 'athletics' (or 'n' / 'a').")
@@ -99,7 +99,7 @@ def prompt_for_article():
     show_summary = None
     # Ask the user until a valid input is provided
     while show_summary is None:
-        user_input = input("Show Summary? (yes/no or y/n): ").strip().lower()
+        user_input = input("Show Summary? (yes (y) / no (n)): ").strip().lower()
         if user_input in ['yes', 'y']:
             show_summary = True
         elif user_input in ['no', 'n']:
@@ -158,7 +158,6 @@ def prompt_for_article():
     }
 
     if main_image_info:
-        images_info.append(main_image_info)  # Add the main image for uploading
         main_image["source"] = f"/images/{main_image_info[1]}"
         main_image["caption"] = input("Main Image Caption (optional): ").strip()
 
@@ -189,8 +188,8 @@ def prompt_for_article():
             
         
     content, images_info = prompt_for_content()
-    
-          
+    if main_image_info:
+        images_info.append(main_image_info)  # Add the main image for uploading
 
 
     article_info = {
