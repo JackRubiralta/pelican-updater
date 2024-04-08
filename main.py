@@ -19,12 +19,11 @@ def get_github_token():
     except FileNotFoundError:
         return None
     
-if __name__ == "__main__":
-    GITHUB_TOKEN = get_github_token()
-    if GITHUB_TOKEN is None:
-        print("No GitHub token found. Please run 'python setup.py' to generate a token.")
-    else:
-        print("GitHub Token found:", GITHUB_TOKEN)
+GITHUB_TOKEN = get_github_token()
+if GITHUB_TOKEN is None:
+    print("No GitHub token found. Please run 'python setup.py' to generate a token.")
+else:
+    print("GitHub Token found:", GITHUB_TOKEN)
     
 REPO_NAME = 'JackRubiralta/pelican-api'
 FILE_PATH = 'data/articles/articles.json'
@@ -42,30 +41,36 @@ def prompt_for_content():
     images_info = []  # Store images information here for later upload
     while True:
         content_type = input("\nType of content to add (paragraph (p) / image (i) / none (n)): ").strip().lower()
-        if content_type == 'none' or content_type == 'n':
+        while content_type not in ['paragraph', 'p', 'image', 'i', 'none', 'n']:
+            print("Invalid input. Please type 'paragraph (p)', 'image (i)', or 'none (n)'.")
+            content_type = input("\nType of content to add (paragraph (p) / image (i) / none (n)): ").strip().lower()
+        
+        if content_type in ['none', 'n']:
             break
-        elif content_type == 'paragraph' or content_type == 'p':
+        elif content_type in ['paragraph', 'p']:
             text = input("Enter paragraph text: ")
             content_list.append({"type": "paragraph", "text": text})
-        elif content_type == 'image' or content_type == 'i':
-            image_file_path = input("Enter image file location: ").strip()
-            if os.path.isfile(image_file_path):
-                image_caption = input("Enter image caption (optional): ").strip()
-                random_filename = generate_random_string(15) + os.path.splitext(image_file_path)[-1]
-                images_info.append((image_file_path, random_filename))
-                content_list.append({"type": "image", "source": f"/images/{random_filename}", "caption": image_caption})
-            else:
-                print("Image file does not exist. Please check the path and try again.")
-        else:
-            print("Invalid input. Please type 'paragraph (p)', 'image (i)', or 'none (n)'.")
+        elif content_type in ['image', 'i']:
+            while True:
+                image_file_path = input("Enter image file location: ").strip()
+                if os.path.isfile(image_file_path):
+                    break
+                else:
+                    print("Image file does not exist. Please check the path and try again.")
+            image_caption = input("Enter image caption (optional): ").strip()
+            random_filename = generate_random_string(15) + os.path.splitext(image_file_path)[-1]
+            images_info.append((image_file_path, random_filename))
+            content_list.append({"type": "image", "source": f"/images/{random_filename}", "caption": image_caption})
     return content_list, images_info
 
 def prompt_for_article():
     print("\nPlease enter the new article details.")
-    section = input("Section (new/athletics): ").strip().lower()
-    while section not in ["new", "athletics"]:
-        print("Invalid section. Please choose 'new' or 'athletics'.")
+    section = input("Section (news/athletics): ").strip().lower()
+    while section not in ["news", "athletics"]:
+        print("Invalid section. Please choose 'news' or 'athletics'.")
         section = input("Section: ").strip().lower()
+    if section == 'news':
+            section = 'new'   
 
     title_text = input("Title Text: ")
     title_size = input("Title Size (big/small/medium): ").strip().lower()
@@ -73,19 +78,21 @@ def prompt_for_article():
         print("Invalid size. Please choose 'big', 'small', or 'medium'.")
         title_size = input("Title Size: ").strip().lower()
 
-    summary_content = input("Summary Content: ")
     show_summary = input("Show Summary? (yes/no): ").strip().lower() == 'yes'
+    summary_content = input("Summary Content: ") if show_summary else ""
+    
     author = input("Author: ")
     date = input("Date (YYYY-MM-DD): ")
     length = int(input("Length (in minutes): "))
 
     main_image_file_path = input("Main Image File Location (optional): ").strip()
     main_image_info = None
-    if main_image_file_path and os.path.isfile(main_image_file_path):
-        random_filename = generate_random_string(15) + os.path.splitext(main_image_file_path)[-1]
-        main_image_info = (main_image_file_path, random_filename)
-    else:
-        print("Main image file does not exist. Continuing without a main image.")
+    if main_image_file_path:
+        if os.path.isfile(main_image_file_path):
+            random_filename = generate_random_string(15) + os.path.splitext(main_image_file_path)[-1]
+            main_image_info = (main_image_file_path, random_filename)
+        else:
+            print("Main image file does not exist. Continuing without a main image.")
 
     content, images_info = prompt_for_content()
     if main_image_info:
@@ -173,9 +180,11 @@ def update_file_on_github(new_content, sha):
         print("Article added successfully.")
     else:
         print("Failed to update article. Response:", response.json())
+        
 def main():
-    
-    
+    if GITHUB_TOKEN is None:
+        print("Exiting: No GitHub token found.")
+        return
     
     print("Creating article!")
     article_info, images_info = prompt_for_article()
