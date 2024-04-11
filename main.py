@@ -27,7 +27,7 @@ else:
     print("GitHub Token found:", GITHUB_TOKEN)
     
 REPO_NAME = 'JackRubiralta/pelican-api'
-FILE_PATH = 'data/articles/articles.json'
+FILE_PATH = 'data/articles/issues.json'
 IMAGE_DIR = 'data/articles/images'
 BRANCH = 'master'
 
@@ -64,21 +64,29 @@ def prompt_for_content():
             content_list.append({"type": "image", "source": f"/images/{random_filename}", "caption": image_caption})
     return content_list, images_info
 
+def prompt_for_issue(data_json):
+    print("Available issues:")
+    for key in data_json.keys():
+        print(f" - {key}")
+    issue = input("Which issue would you like to update (e.g., issue10): ").strip()
+    while issue not in data_json:
+        print("Invalid issue key. Please type one of the listed issue keys.")
+        issue = input("Which issue would you like to update (e.g., issue10): ").strip()
+    return issue
+
+def prompt_for_section(data_json, issue):
+    print("Available sections:")
+    for key in data_json[issue].keys():
+        print(f" - {key}")
+    section = input("Which section would you like to add the article to: ").strip()
+    while section not in data_json[issue]:
+        print("Invalid section. Please choose one of the listed sections.")
+        section = input("Which section would you like to add the article to: ").strip()
+    return section
+
 def prompt_for_article():
     print("\nPlease enter the new article details.")
-    section = input("Section (news (n) / athletics (a)): ").strip().lower()
-    # Keep asking until a valid input is provided
-    while section not in ["news", "n", "athletics", "a"]:
-        print("Invalid section. Please choose 'news' or 'athletics' (or 'n' / 'a').")
-        section = input("Section: ").strip().lower()
-
-    # Map the abbreviations to their full form
-    if section == 'n':
-        section = 'new'
-    elif section == 'a':
-        section = 'athletics' 
-    elif section == 'news':
-        section = 'new'
+   
 
     title_text = input("Title Text: ")
     title_size = input("Title Size (big (b) / medium (m) / small (s)): ").strip().lower()
@@ -193,17 +201,14 @@ def prompt_for_article():
 
 
     article_info = {
-        "section": section,
-        "article": {
-            "id": generate_random_string(10),
-            "title": {"text": title_text, "size": title_size},
-            "summary": {"content": summary_content, "show": show_summary},
-            "author": author,
-            "date": date,
-            "length": length,
-            "content": content,
-            "image": main_image,
-        }
+        "id": generate_random_string(10),
+        "title": {"text": title_text, "size": title_size},
+        "summary": {"content": summary_content, "show": show_summary},
+        "author": author,
+        "date": date,
+        "length": length,
+        "content": content,
+        "image": main_image
     }
 
     return article_info, images_info
@@ -221,7 +226,6 @@ def upload_image_to_github(image_path, random_filename):
     else:
         print(f"Failed to upload image {random_filename}. Response: {response.text}")
         return None
-    
 
 def upload_images(images_info):
     path_to_url = {}
@@ -241,43 +245,47 @@ def fetch_current_data():
     if response.status_code == 200:
         file_info = response.json()
         decoded_content = base64.b64decode(file_info['content']).decode('utf-8')
-        return decoded_content, file_info['sha']
+        return json.loads(decoded_content), file_info['sha']
     else:
-        print("Failed to fetch current articles.json. Response:", response.text)
+        print("Failed to fetch issues.json. Response:", response.text)
         return None, None
 
 def update_file_on_github(new_content, sha):
     url = f"https://api.github.com/repos/{REPO_NAME}/contents/{FILE_PATH}"
     headers = {'Authorization': f'token {GITHUB_TOKEN}', 'Accept': 'application/vnd.github.v3+json'}
     data = {
-        'message': "Update articles.json with a new article",
+        'message': "Update issues.json with a new article",
         'content': base64.b64encode(new_content.encode('utf-8')).decode('utf-8'),
         'branch': BRANCH,
         'sha': sha
     }
     response = requests.put(url, headers=headers, data=json.dumps(data))
     if response.status_code == 200:
-        print("Article added successfully.")
+        print("Issues updated successfully.")
     else:
-        print("Failed to update article. Response:", response.json())
-        
+        print("Failed to update issues. Response:", response.text)
+
 def main():
     if GITHUB_TOKEN is None:
         print("Exiting: No GitHub token found.")
         return
     
-    print("Creating article!")
+    data_json, sha = fetch_current_data()
+    if data_json is None:
+        print("Exiting: Failed to fetch data.")
+        return
+
+    issue = prompt_for_issue(data_json)
+    section = prompt_for_section(data_json, issue)
+
+    print("Creating article for section:", section, "in issue:", issue)
     article_info, images_info = prompt_for_article()
     path_to_url = upload_images(images_info)
     article_info = update_article_with_image_urls(article_info, path_to_url)
 
-    current_data, sha = fetch_current_data()
-    if current_data is not None:
-        data_json = json.loads(current_data)
-        section = article_info['section']
-        data_json[section].append(article_info['article'])
-        updated_content = json.dumps(data_json, indent=4)
-        update_file_on_github(updated_content, sha)
+    data_json[issue][section].append(article_info)
+    updated_content = json.dumps(data_json, indent=4)
+    update_file_on_github(updated_content, sha)
 
 if __name__ == "__main__":
     main()
