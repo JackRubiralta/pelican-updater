@@ -19,12 +19,20 @@ echo Installing required pip packages...
 python -m pip install -r requirements.txt
 
 echo.
-IF EXIST github_token.txt (
+IF EXIST ..\github_token.txt (
     echo GitHub token found.
 ) ELSE (
-    echo GitHub token file not found. Opening GitHub token creation page...
+    echo GitHub token file not found.
+    echo Opening GitHub token creation page...
     start https://github.com/settings/tokens
-    echo Please create a file named github_token.txt in the script's directory and paste your GitHub token inside.
+    echo Please select the following scopes for the GitHub token:
+    echo - repo: Full control of private repositories
+    echo - admin:repo_hook: Full control of repository hooks
+    echo - user: Update all user data
+    echo Enter your GitHub token:
+    set /p GITHUB_TOKEN=GitHub Token:
+    echo %GITHUB_TOKEN% > ..\github_token.txt
+    echo GitHub token saved to the parent directory.
 )
 
 :end

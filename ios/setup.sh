@@ -6,7 +6,7 @@ if ! command -v brew &> /dev/null; then
     echo "Homebrew not found. Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     # Add Homebrew to PATH if it's not already added
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/$USER/.zprofile
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
@@ -31,7 +31,14 @@ else
     echo "GitHub token file not found."
     echo "Opening GitHub token creation page..."
     open https://github.com/settings/tokens
-    echo "Please create a file named github_token.txt in the script's directory and paste your GitHub token inside."
+    echo "Please select the following scopes for the GitHub token:"
+    echo "- repo: Full control of private repositories"
+    echo "- admin:repo_hook: Full control of repository hooks"
+    echo "- user: Update all user data"
+    echo "Enter your GitHub token:"
+    read GITHUB_TOKEN
+    echo $GITHUB_TOKEN > github_token.txt
+    echo "GitHub token saved to github_token.txt."
 fi
 
 echo

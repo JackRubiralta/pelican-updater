@@ -166,7 +166,7 @@ def prompt_for_article():
     }
 
     if main_image_info:
-        main_image["source"] = f"/images/{main_image_info[1]}"
+        main_image["source"] = f"{main_image_info[1]}"
         main_image["caption"] = input("Main Image Caption (optional): ").strip()
 
         # Validate input for showing the main image
@@ -232,7 +232,7 @@ def upload_images(images_info):
     for image_path, random_filename in images_info:
         uploaded_url = upload_image_to_github(image_path, random_filename)
         if uploaded_url:
-            path_to_url[f"/images/{random_filename}"] = uploaded_url
+            path_to_url[f"{random_filename}"] = uploaded_url
     return path_to_url
 
 def update_article_with_image_urls(article_info, path_to_url):
