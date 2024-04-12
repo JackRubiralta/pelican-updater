@@ -37,16 +37,16 @@ def generate_random_string(length=15):
     return ''.join(random.choice(letters) for i in range(length))
 
 def prompt_for_content():
-    print("\nAdding new content items. Type 'none' to finish adding.")
+    print("\nAdding new content items. Type 'done' to finish adding.")
     content_list = []
     images_info = []  # Store images information here for later upload
     while True:
-        content_type = input("\nType of content to add (header (h) / paragraph (p) / image (i) / none (n)): ").strip().lower()
-        while content_type not in ['header', 'h', 'paragraph', 'p', 'image', 'i', 'none', 'n']:
-            print("Invalid input. Please type 'header (h)', 'paragraph (p)', 'image (i)', or 'none (n)'.")
-            content_type = input("\nType of content to add (header (h) / paragraph (p) / image (i) / none (n)): ").strip().lower()
+        content_type = input("\nType of content to add (header (h) / paragraph (p) / image (i) / list (l) / done (d)): ").strip().lower()
+        while content_type not in ['header', 'h', 'paragraph', 'p', 'image', 'i', 'list', 'l', 'done', 'd']:
+            print("Invalid input. Please type 'header (h)', 'paragraph (p)', 'image (i)', 'list (l)', or 'done (d)'.")
+            content_type = input("\nType of content to add (header (h) / paragraph (p) / image (i) / list (l) / done (d)): ").strip().lower()
 
-        if content_type in ['none', 'n']:
+        if content_type in ['done', 'd']:
             break
         elif content_type in ['header', 'h']:
             text = input("Enter header text: ")
@@ -65,7 +65,19 @@ def prompt_for_content():
             random_filename = generate_random_string(15) + os.path.splitext(image_file_path)[-1]
             images_info.append((image_file_path, random_filename))
             content_list.append({"type": "image", "source": f"/images/{random_filename}", "caption": image_caption})
+        elif content_type in ['list', 'l']:
+            items = []
+            print("Enter list items, type 'done' to finish:")
+            while True:
+                item = input("List item: ").strip()
+                if item.lower() == 'done':
+                    break
+                items.append(item)
+            if items:
+                content_list.append({"type": "list", "items": items})
+
     return content_list, images_info
+
 def prompt_for_issue(data_json):
     print("Available issues:")
     for key in data_json.keys():
