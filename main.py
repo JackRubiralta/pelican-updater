@@ -36,15 +36,16 @@ def generate_random_string(length=15):
     letters = string.ascii_letters
     return ''.join(random.choice(letters) for i in range(length))
 
+
 def prompt_for_content():
     print("\nAdding new content items. Type 'done' to finish adding.")
     content_list = []
     images_info = []  # Store images information here for later upload
     while True:
-        content_type = input("\nType of content to add (header (h) / paragraph (p) / image (i) / list (l) / done (d)): ").strip().lower()
-        while content_type not in ['header', 'h', 'paragraph', 'p', 'image', 'i', 'list', 'l', 'done', 'd']:
-            print("Invalid input. Please type 'header (h)', 'paragraph (p)', 'image (i)', 'list (l)', or 'done (d)'.")
-            content_type = input("\nType of content to add (header (h) / paragraph (p) / image (i) / list (l) / done (d)): ").strip().lower()
+        content_type = input("\nType of content to add (header (h) / paragraph (p) / image (i) / list (l) / quote (q) / done (d)): ").strip().lower()
+        while content_type not in ['header', 'h', 'paragraph', 'p', 'image', 'i', 'list', 'l', 'quote', 'q', 'done', 'd']:
+            print("Invalid input. Please type 'header (h)', 'paragraph (p)', 'image (i)', 'list (l)', 'quote (q)', or 'done (d)'.")
+            content_type = input("\nType of content to add (header (h) / paragraph (p) / image (i) / list (l) / quote (q) / done (d)): ").strip().lower()
 
         if content_type in ['done', 'd']:
             break
@@ -75,6 +76,9 @@ def prompt_for_content():
                 items.append(item)
             if items:
                 content_list.append({"type": "list", "items": items})
+        elif content_type in ['quote', 'q']:
+            text = input("Enter quote text: ")
+            content_list.append({"type": "quote", "text": text})
 
     return content_list, images_info
 
