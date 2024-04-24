@@ -121,7 +121,7 @@ def add_new_content(content_type):
         random_filename = generate_random_string(15) + os.path.splitext(image_file_path)[-1]
         return {
             "type": "image",
-            "source": f"/images/{random_filename}",
+            "source": f"{random_filename}",
             "caption": image_caption,
             "image_info": (image_file_path, random_filename)
         }
@@ -165,6 +165,8 @@ def edit_article(data_json, issue, section):
     # After editing, return the updated article_info, images_info, and article_index
     return article_info, images_info, article_index
 def prompt_for_article(article_info, edit=False):
+    new_images_info = []  # Initialize this at the start
+
     title_text = prompt("Title Text: ", default=article_info['title']['text'])
     article_info['title']['text'] = title_text
     title_size = prompt("Title Size (big (b) / medium (m) / small (s)): ", default=article_info['title']['size']).strip().lower()
@@ -196,32 +198,30 @@ def prompt_for_article(article_info, edit=False):
     article_info['length'] = int(length_input)
 
     main_image_file_path = prompt("Main Image File Location (optional, type 'skip' to skip or leave blank to keep current): ", default='')
-    main_image_info = None
-    while main_image_file_path.lower() != 'skip' and main_image_file_path:
+    if main_image_file_path.lower() != 'skip' and main_image_file_path:
         if os.path.isfile(main_image_file_path):
             random_filename = generate_random_string(15) + os.path.splitext(main_image_file_path)[-1]
             main_image_info = (main_image_file_path, random_filename)
-            break
+            new_images_info.append(main_image_info)  # Add the main image info to the list
+            article_info['image']['source'] = f"{random_filename}"
+            main_image_caption = prompt("Main Image Caption (optional): ", default=article_info['image']['caption'])
+            article_info['image']['caption'] = main_image_caption
+            show_image = prompt("Show Main Image? (yes/no or y/n): ", default='y' if article_info['image']['show'] else 'n').strip().lower() in ['yes', 'y']
+            article_info['image']['show'] = show_image
+            position_input = prompt("Main Image Position (bottom/side/top or b/s/t): ", default=article_info['image']['position']).strip().lower()
+            article_info['image']['position'] = {'b': 'bottom', 's': 'side', 't': 'top'}.get(position_input, position_input)
         else:
             print("Main image file does not exist. Please check the path and try again or type 'skip' to continue without a main image.")
             main_image_file_path = prompt("Main Image File Location (optional, type 'skip' to skip): ", default='')
 
-    if main_image_info:
-        article_info['image']['source'] = f"/images/{random_filename}"
-        main_image_caption = prompt("Main Image Caption (optional): ", default=article_info['image']['caption'])
-        article_info['image']['caption'] = main_image_caption
-        show_image = prompt("Show Main Image? (yes/no or y/n): ", default='y' if article_info['image']['show'] else 'n').strip().lower() in ['yes', 'y']
-        article_info['image']['show'] = show_image
-        position_input = prompt("Main Image Position (bottom/side/top or b/s/t): ", default=article_info['image']['position']).strip().lower()
-        article_info['image']['position'] = {'b': 'bottom', 's': 'side', 't': 'top'}.get(position_input, position_input)
-
     if edit:
         edit_content(article_info['content'])
+        return article_info, new_images_info  # Return the modified content and image info
     else:
-        new_content, new_images_info = create_content()
+        new_content, additional_images = create_content()
         article_info['content'].extend(new_content)
+        new_images_info.extend(additional_images)  # Include any additional images from the new content
         return article_info, new_images_info
-    return article_info, []  # Return article_info
 
 def update_file_on_github(new_content, sha):
     url = f"https://api.github.com/repos/{REPO_NAME}/contents/{FILE_PATH}"
@@ -323,7 +323,6 @@ def main():
         return  # You can also choose to recall main() or repeat the prompt depending on your user experience design.
 
     path_to_url = upload_images(images_info)
-    article_info = update_article_with_image_urls(article_info, path_to_url)
 
     updated_content = json.dumps(data_json, indent=4)
     update_file_on_github(updated_content, sha)
