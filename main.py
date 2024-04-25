@@ -28,8 +28,8 @@ else:
     print("GitHub Token found:", GITHUB_TOKEN)
 
 REPO_NAME = 'JackRubiralta/pelican-api'
-FILE_PATH = 'data/articles/issues.json'
-IMAGE_DIR = 'data/articles/images'
+FILE_PATH = 'data/issue12/articles.json'
+IMAGE_DIR = 'data/images'
 BRANCH = 'master'
 
 def generate_random_string(length=15):
@@ -154,10 +154,10 @@ def create_article(data_json, issue, section):
 
 def edit_article(data_json, issue, section):
     print("Select the article to edit:")
-    for idx, article in enumerate(data_json[issue][section]):
+    for idx, article in enumerate(data_json[section]):
         print(f"{idx}: {article['title']['text']}")
     article_index = int(prompt("Enter the index of the article to edit: ", default=''))
-    article_info = data_json[issue][section][article_index]
+    article_info = data_json[section][article_index]
 
     # Call prompt_for_article with edit=True and handle the returned values
     article_info, images_info = prompt_for_article(article_info, edit=True)
@@ -184,6 +184,7 @@ def prompt_for_article(article_info, edit=False):
     author = prompt("Author: ", default=article_info['author'])
     article_info['author'] = author
 
+    article_info['date'] = "2024-04-24"
     date = prompt("Date (YYYY-MM-DD): ", default=article_info['date'])
     date_regex = r"^\d{4}-\d{2}-\d{2}$"
     while not re.match(date_regex, date):
@@ -253,18 +254,18 @@ def prompt_for_issue(data_json):
     print("Available issues:")
     for key in data_json.keys():
         print(f" - {key}")
-    issue = input("Which issue would you like to update or edit (e.g., issue10): ").strip()
+    issue = input("Which issue would you like to update: ").strip()
     while issue not in data_json:
         print("Invalid issue key. Please type one of the listed issue keys.")
-        issue = input("Which issue would you like to update or edit (e.g., issue10): ").strip()
+        issue = input("Which issue would you like to update: ").strip()
     return issue
 
 def prompt_for_section(data_json, issue):
     print("Available sections in Issue:", issue)
-    for key in data_json[issue].keys():
+    for key in data_json.keys():
         print(f" - {key}")
     section = input("Which section would you like to add or edit the article in: ").strip()
-    while section not in data_json[issue]:
+    while section not in data_json:
         print("Invalid section. Please choose one of the listed sections.")
         section = input("Which section would you like to add or edit the article in: ").strip()
     return section
@@ -307,17 +308,17 @@ def main():
         print("Exiting: Failed to fetch data.")
         return
 
-    issue = prompt_for_issue(data_json)
+    issue = "issue12"
     section = prompt_for_section(data_json, issue)
 
     action_choice = prompt("Do you want to edit an existing article or create a new one? (edit/create): ", default='create').strip().lower()
     if action_choice == 'edit':
         article_info, images_info, article_index = edit_article(data_json, issue, section)
-        data_json[issue][section][article_index] = article_info
+        data_json[section][article_index] = article_info
     elif action_choice == 'create':
         print("Creating article for section:", section, "in issue:", issue)
         article_info, images_info = create_article(data_json, issue, section)
-        data_json[issue][section].append(article_info)
+        data_json[section].append(article_info)
     else:
         print("Invalid action. Please choose 'edit' or 'create'.")
         return  # You can also choose to recall main() or repeat the prompt depending on your user experience design.
